@@ -6,10 +6,11 @@
 class FeedforwardTuner {
 public:
     FeedforwardTuner(
-        float cvMin, float cvMax,      // sweep range
+        double cvMin, double cvMax,      // sweep range
         int numSamples,                // number of (CV,PV) samples
         unsigned long settleTimeMs,    // wait time for PV settling
-        const float &pvRef             // reference to PV variable
+        const double &pvRef,            // reference to PV variable
+        double &cvRef            // reference to CV
     );
 
     // Call from loop()
@@ -17,11 +18,11 @@ public:
 
     bool IsFinished() const;
 
-    float GetB0() const { return _b0; }
+    double GetB0() const { return _b0; }
 
-    float GetB1() const { return _b1; }
+    double GetB1() const { return _b1; }
 
-    float GetCV() const { return _currentCV; };
+    double GetCV() const { return _currentCV; };
 
 private:
     enum State {
@@ -33,21 +34,22 @@ private:
 
     void ComputeOLS();
 
-    float *_cv;
-    float *_pv;
-    int _N;
+    double *_cv;
+    double *_pv;
+    int _numSamples;
 
-    float _cvMin, _cvMax;
+    double _cvMin, _cvMax;
     unsigned long _settleTime;
-    const float &_pvRef;   // reference to PV variable
+    const double &_pvRef;   // reference to PV variable
+    double &_cvRef;
 
     State _state;
     int _index;
 
-    float _currentCV;
+    double _currentCV;
     unsigned long _stateStartTime;
 
-    float _b0, _b1;
+    double _b0, _b1;
 };
 
 #endif

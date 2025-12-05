@@ -2,21 +2,21 @@
 #include "FeedforwardTuner.h"
 
 FeedforwardTuner::FeedforwardTuner(
-    float cvMin, float cvMax,
+    double cvMin, double cvMax,
     int numSamples,
     unsigned long settleTimeMs,
-    const float &pvRef
+    const double &pvRef,
+    double &cvRef
 )
 : _cvMin(cvMin), _cvMax(cvMax),
-  _N(numSamples), _settleTime(settleTimeMs),
-  _pvRef(pvRef)
+  _numSamples(numSamples), _settleTime(settleTimeMs),
+  _pvRef(pvRef), _cvRef(cvRef)
 {
-    _cv = new float[_N];
-    _pv = new float[_N];
+    _cv = new double[_numSamples];
+    _pv = new double[_numSamples];
 
     _state = SET_CV;
     _index = 0;
-    _currentCV = _cvMin;
     _stateStartTime = millis();
     _b0 = 0;
     _b1 = 0;
@@ -34,8 +34,8 @@ void FeedforwardTuner::RunTime() {
     switch (_state) {
 
         case SET_CV:
-            _currentCV = _cvMin +
-                (_cvMax - _cvMin) * ((float)_index / (_N - 1));
+            _cvRef = _cvMin +
+                (_cvMax - _cvMin) * ((double)_index / (_numSamples - 1));
             _stateStartTime = now;
             _state = WAIT_SETTLE;
             break;
@@ -46,12 +46,12 @@ void FeedforwardTuner::RunTime() {
             break;
 
         case RECORD_POINT:
-            _cv[_index] = _currentCV;
+            _cv[_index] = _cvRef;
             _pv[_index] = _pvRef;
 
             _index++;
 
-            if (_index >= _N) {
+            if (_index >= _numSamples) {
                 ComputeOLS();
                 _state = DONE;
             } else {
@@ -65,22 +65,22 @@ void FeedforwardTuner::RunTime() {
 }
 
 void FeedforwardTuner::ComputeOLS() {
-    float sumX=0, sumY=0, sumXY=0, sumXX=0;
+    double sumX=0, sumY=0, sumXY=0, sumXX=0;
 
-    for (int i=0; i<_N; i++) {
-        float x = _pv[i];
-        float y = _cv[i];
+    for (int i=0; i<_numSamples; i++) {
+        double x = _pv[i];
+        double y = _cv[i];
         sumX  += x;
         sumY  += y;
         sumXY += x*y;
         sumXX += x*x;
     }
 
-    float meanX = sumX / _N;
-    float meanY = sumY / _N;
+    double meanX = sumX / _numSamples;
+    double meanY = sumY / _numSamples;
 
-    float num = sumXY - _N * meanX * meanY;
-    float den = sumXX - _N * meanX * meanX;
+    double num = sumXY - _numSamples * meanX * meanY;
+    double den = sumXX - _numSamples * meanX * meanX;
 
     _b1 = num / den;
     _b0 = meanY - _b1 * meanX;
