@@ -22,8 +22,6 @@ public:
 
     double GetB1() const { return _b1; }
 
-    double GetCV() const { return _currentCV; };
-
 private:
     enum State {
         SET_CV,
@@ -46,7 +44,6 @@ private:
     State _state;
     int _index;
 
-    double _currentCV;
     unsigned long _stateStartTime;
 
     double _b0, _b1;
