@@ -1,9 +1,10 @@
 #ifndef FEEDFORWARDTUNER_H
 #define FEEDFORWARDTUNER_H
 
-#include <Arduino.h>
+// #include <Arduino.h>
 
-class FeedforwardTuner {
+class FeedforwardTuner 
+{
 public:
     FeedforwardTuner(
         double cvMin, double cvMax,      // sweep range
@@ -13,16 +14,20 @@ public:
         double &cvRef            // reference to CV
     );
 
+    ~FeedforwardTuner();
+    FeedforwardTuner(const FeedforwardTuner&) = delete;
+    FeedforwardTuner& operator=(const FeedforwardTuner&) = delete;
+
     // Call from loop()
     void RunTime();
+
+    void Reset();
 
     bool IsFinished() const;
 
     double GetB0() const { return _b0; }
 
     double GetB1() const { return _b1; }
-
-    double GetCV() const { return _currentCV; };
 
 private:
     enum State {
@@ -46,7 +51,6 @@ private:
     State _state;
     int _index;
 
-    double _currentCV;
     unsigned long _stateStartTime;
 
     double _b0, _b1;

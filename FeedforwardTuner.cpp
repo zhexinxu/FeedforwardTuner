@@ -12,6 +12,7 @@ FeedforwardTuner::FeedforwardTuner(
   _numSamples(numSamples), _settleTime(settleTimeMs),
   _pvRef(pvRef), _cvRef(cvRef)
 {
+    _numSamples = max(numSamples, 2);
     _cv = new double[_numSamples];
     _pv = new double[_numSamples];
 
@@ -64,10 +65,17 @@ void FeedforwardTuner::RunTime() {
     }
 }
 
+void FeedforwardTuner::Reset() {
+    _state = SET_CV;
+    _index = 0;
+    _stateStartTime = millis();
+}
+
 void FeedforwardTuner::ComputeOLS() {
     double sumX=0, sumY=0, sumXY=0, sumXX=0;
 
-    for (int i=0; i<_numSamples; i++) {
+    for (int i=0; i<_numSamples; i++) 
+    {
         double x = _pv[i];
         double y = _cv[i];
         sumX  += x;
@@ -82,6 +90,21 @@ void FeedforwardTuner::ComputeOLS() {
     double num = sumXY - _numSamples * meanX * meanY;
     double den = sumXX - _numSamples * meanX * meanX;
 
-    _b1 = num / den;
-    _b0 = meanY - _b1 * meanX;
+    if (fabs(den) < 1e-9) 
+    {
+        _b0 = 0.0;
+        _b1 = 0.0;
+    }
+    else
+    {
+        _b1 = num / den;
+        _b0 = meanY - _b1 * meanX;
+    }
 }
+
+FeedforwardTuner::~FeedforwardTuner()
+{
+    delete[] _cv;
+    delete[] _pv;
+}
+
